@@ -1,5 +1,6 @@
--- local s = '+okok -llol "nope lol" "loool  lol ll topnope" is:archived'
+-- Returns the stem of the query term if necessary (using Porter stemmer algorithm)
 function cstem (s)
+  -- Detach the prefix (+/-) if any before we stem
   local f = string.sub(s, 1, 1)
   if f == "+" or f == "-" then
     s = string.sub(s, 2, string.len(s))
@@ -77,8 +78,7 @@ function split_qs (s)
   end
   return t
 end
-print(query)
-return {qs = split_qs(query.qs), fields = query.fields}
 
--- keywords2 = keywords.match(/[-\+\:\w]+|["|'](?:\\"|[^i"])+['"]/g);
--- ["okok", "+ok", "-yes", ""ook okokko k"", "'okok  lol'", "is:archived"]
+print(query)
+
+return {qs = split_qs(query.qs), fields = query.fields}
