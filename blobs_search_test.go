@@ -131,7 +131,6 @@ func TestBlobSearchPreQuery(t *testing.T) {
 }
 
 func TestBlobSearch(t *testing.T) {
-	return
 	L := lua.NewState()
 	defer L.Close()
 

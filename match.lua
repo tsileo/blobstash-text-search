@@ -1,6 +1,5 @@
 -- Compute the stems for all the fields
 local fields = {'content', 'title'}
-local tags = {tag=true, ['type']=true}
 
 function debug(msg, ...)
   if debug then
@@ -67,44 +66,16 @@ function update_res (ok, prefix, cond)
   return ok or cond, false
 end
 
--- Iterate over each query item
-for index,value in ipairs(query.qs) do  -- TODO s/value/term/
-  -- Determine if the item has a +/- prefix
-  local prefix = ''
-  if string.sub(value, 1, 1) == '+' or string.sub(value, 1, 1) == '-' then
-    prefix = string.sub(value, 1, 1)
-    value = string.sub(value, 2, string.len(value))
-  end
-  debug('query item index=%i value=%s', index, value)
-
-  -- check if the term is quoted
-  quoted = string.sub(value, 1, 1) == '"'
-
-  -- check if term contains a colon (like 'tag:work')
-  _, colon_count = string.gsub(value, ':', '')
-  contains_colon = colon_count == 1
-  tag = ''
-  tag_value = ''
-  -- extract the tag (and it's value) if it looks there's one
-  if contains_colon then
-    maybe_tag = string.sub(value, 1, string.find(value, ':')-1)
-    if tags[maybe_tag] == true then
-      tag = maybe_tag
-      tag_value = string.sub(value, string.find(value, ':')+1, string.len(value))
-    end
-  end
-  debug('tag_value=%s', tag_value)
-
-  -- Check the current query item against each field, and OR the results for each field
-  -- before updating the res
+-- Iterate over each query term
+for index, term in ipairs(query.terms) do 
   cond = false
 
-  if tag ~= '' then
+  if term.kind == 'tag' then
     -- The term contains a tag
-    if tag == 'tag' then
+    if term.tag == 'tag' then
 
       -- check if the tag (as in tagging, the "query tag" value) is in the index
-      if tags_index[tag_value] == true then
+      if tags_index[term.value] == true then
         cond = cond or true
       end
 
@@ -112,17 +83,17 @@ for index,value in ipairs(query.qs) do  -- TODO s/value/term/
   else
     -- This is a text search, iterate over each text field
     for qfield,field in ipairs(fields) do
-      debug('field[%i]=%s, value=%s, cond=%s', qfield, field, doc[field], cond)
+      -- debug('field[%i]=%s, value=%s, cond=%s', qfield, field, doc[field], cond)
       -- Check if the current document contains the field
       if doc[field] ~= nil then
 
         -- If the string a quoted, we perform an exact match
-        if quoted and string.find(doc[field], string.sub(value, 2, string.len(value) - 1)) ~= nil then
+        if term.kind == 'text_match' and string.find(doc[field], term.value) ~= nil then
           cond = cond or true
         end
 
         -- Not a quoted term, we look for the stems
-        if not quoted and stems[field][value] == true then
+        if term.kind == 'text_stems' and stems[field][term.value] == true then
           cond = cond or true
         end
 
@@ -131,7 +102,7 @@ for index,value in ipairs(query.qs) do  -- TODO s/value/term/
   end
 
   -- Update `ok`
-  ok, bigno = update_res(ok, prefix, cond)
+  ok, bigno = update_res(ok, term.prefix, cond)
   -- if there's a big no (i.e. a matching "-term" or non-matching "+term" triggered it)
   if bigno then
     return false
