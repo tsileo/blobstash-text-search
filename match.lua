@@ -6,8 +6,6 @@ function debug(msg, ...)
     print(string.format(msg, unpack(arg)))
   end
 end
-debug('')
-debug('debug enabled, %s', #doc)
 
 -- precompute the stems for all the text fields
 -- FIXME(tsileo): do it only if needed (i.e. if there's a text search term)
@@ -22,10 +20,8 @@ end
 
 -- build the tags index of the doc
 local tags_index = {}
-debug('doc=%s, %s', doc, doc['tags'])
 if doc['tags'] ~= nil then
   for _,tag in ipairs(doc['tags']) do
-    debug('init tag=%s', tag)
     tags_index[tag] = true
   end
 end
@@ -70,20 +66,22 @@ end
 for index, term in ipairs(query.terms) do 
   cond = false
 
+  -- The term contains a tag
   if term.kind == 'tag' then
-    -- The term contains a tag
-    if term.tag == 'tag' then
 
+    if term.tag == 'tag' then
       -- check if the tag (as in tagging, the "query tag" value) is in the index
       if tags_index[term.value] == true then
         cond = cond or true
       end
 
     end
-  else
+  end
+
+  -- The term is a text search
+  if term.kind == 'text_match' or term.kind == 'text_stems' then
     -- This is a text search, iterate over each text field
     for qfield,field in ipairs(fields) do
-      -- debug('field[%i]=%s, value=%s, cond=%s', qfield, field, doc[field], cond)
       -- Check if the current document contains the field
       if doc[field] ~= nil then
 
