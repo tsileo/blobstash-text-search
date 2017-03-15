@@ -8,7 +8,7 @@ function debug(msg, ...)
 end
 
 -- precompute the stems for all the text fields
--- FIXME(tsileo): do it only if needed (i.e. if there's a text search term)
+-- FIXME(tsileo): do it only if needed (i.e. if there's at least 1 text search term)
 local stems = {}
 for ifield,field in ipairs(fields) do
   if doc[field] ~= nil then
@@ -29,10 +29,6 @@ end
 -- TODO(tsileo): archived:false by default
 -- TODO(tsileo): FS black hole for blobs project
 -- TODO(tsileo): near:lat,long query
-
--- TODO(tsileo): tags query
--- tag:work
--- -tag:perso
 
 -- TODO(tsileo): support date query, like:
 -- created:2016

@@ -107,7 +107,7 @@ func TestBlobSearchPreQuery(t *testing.T) {
 			},
 		},
 		{
-			"\"lol\" +ok \"yes\" -no tag:boys +tag:work",
+			"\"lol\" +ok \"yes\" -no tag:boys +tag:work boys",
 			[]map[string]interface{}{
 				map[string]interface{}{"value": "lol", "kind": "text_match", "prefix": ""},
 				map[string]interface{}{"value": "ok", "kind": "text_stems", "prefix": "+"},
@@ -115,6 +115,7 @@ func TestBlobSearchPreQuery(t *testing.T) {
 				map[string]interface{}{"value": "no", "kind": "text_stems", "prefix": "-"},
 				map[string]interface{}{"value": "boys", "kind": "tag", "tag": "tag", "prefix": ""},
 				map[string]interface{}{"value": "work", "kind": "tag", "tag": "tag", "prefix": "+"},
+				map[string]interface{}{"value": "boi", "kind": "text_stems", "prefix": ""},
 			},
 		},
 	} {

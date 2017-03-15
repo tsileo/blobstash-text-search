@@ -105,6 +105,8 @@ function split_qs (qs)
   return out
 end
 
+-- Now convert the list of search terms to table
+-- (like ['ok', 'tag:work'] => [{value='ok', kind='text_stems', prefix=''}, {...}]
 terms = {}
 for _, value in ipairs(split_qs(query.qs)) do
   local prefix = ''
