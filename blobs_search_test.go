@@ -1,4 +1,4 @@
-package blobssearch
+package main
 
 import (
 	"bytes"

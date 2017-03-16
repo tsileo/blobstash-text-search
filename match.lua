@@ -59,7 +59,7 @@ function update_res (ok, prefix, cond)
 end
 
 -- Iterate over each query term
-for index, term in ipairs(query.terms) do 
+for index, term in ipairs(query.terms) do
   cond = false
 
   -- The term contains a tag
@@ -70,8 +70,8 @@ for index, term in ipairs(query.terms) do
       if tags_index[term.value] == true then
         cond = cond or true
       end
-
     end
+
   end
 
   -- The term is a text search
