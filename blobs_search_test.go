@@ -168,6 +168,7 @@ func TestBlobSearch(t *testing.T) {
 		docs []docMatch
 	}{
 		{"ok", []docMatch{
+			{map[string]interface{}{}, false},
 			{map[string]interface{}{"content": "ok"}, true},
 			{map[string]interface{}{"content": "lol", "title": "Ok it works"}, true},
 			{map[string]interface{}{"content": "lol"}, false},
@@ -201,6 +202,26 @@ func TestBlobSearch(t *testing.T) {
 		{"tag:work", []docMatch{
 			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}}, true},
 			{map[string]interface{}{"content": "lol", "tags": []interface{}{"perso"}}, false},
+		}},
+		{"kind:note", []docMatch{
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}, "kind": "note"}, true},
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}, "kind": "file"}, false},
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"perso"}}, false},
+		}},
+		{"created:2017 lol", []docMatch{
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}, "created": "2017-05-12T12:13:12"}, true},
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"perso"}, "created": "2016-01-01T05:02:01Z"}, true},
+			{map[string]interface{}{"content": "no", "tags": []interface{}{"perso"}, "created": "2016-03-05T04:21:12Z"}, false},
+		}},
+		{"updated:2017 lol", []docMatch{ // FIXME(tsileo): RFC date for all created/updated
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}, "created": "2017-02-02T04:32:12"}, true},
+			{map[string]interface{}{"content": "nope", "tags": []interface{}{"perso"}, "created": "2016-01-01T01:01:01", "updated": "2017-01-02T05:01:02"}, true},
+			{map[string]interface{}{"content": "no", "tags": []interface{}{"perso"}, "created": "2016-01-01T04:03:02"}, false},
+		}},
+		{"-created:2016 lol", []docMatch{
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"work", "lol"}, "created": "2017-02-05T12:30:00"}, true},
+			{map[string]interface{}{"content": "lol", "tags": []interface{}{"perso"}, "created": "2016-02-02T01:01:01"}, false},
+			{map[string]interface{}{"content": "no", "tags": []interface{}{"perso"}, "created": "2016-05-06T02:02:02"}, false},
 		}},
 	} {
 		q := prepQuery(tdata.qs)

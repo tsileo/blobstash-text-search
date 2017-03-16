@@ -1,10 +1,10 @@
 -- Returns the stem of the query term if necessary (using Porter stemmer algorithm)
-local tags = {tag=true, ['type']=true}
+local tags = {tag=true, kind=true, created=true, updated=true}
 
 -- debug function
 function debug (msg, ...)
   if debug then
-    print(string.format(msg, unpack(arg)))
+    print(msg:format(unpack(arg)))
   end
 end
 
@@ -36,13 +36,13 @@ end
 
 function cstem (s)
   -- Detach the prefix (+/-) if any before we stem
-  local f = string.sub(s, 1, 1)
+  local f = s:sub(1, 1)
   if f == "+" or f == "-" then
-    s = string.sub(s, 2, string.len(s))
+    s = s:sub(2, s:len())
   else
     f = ''
   end
-  if string.sub(s, 1, 1) == '"' and string.sub(s, string.len(s) - 1, 1) == '"' then
+  if s:sub(1, 1) == '"' and s:sub(s:len() - 1, 1) == '"' then
     -- If the item is quoted, return it as it.
     return f..s
   end
@@ -56,9 +56,9 @@ function split_qs (qs)
   out = {}
   buf = ''
   in_quote = false
-  for _,k in ipairs(string.split(qs, ' ')) do
+  for _,k in ipairs(qs:split(' ')) do
     -- count the number of double quote (")
-    _, count = string.gsub(k, '"', '')
+    _, count = k:gsub('"', '')
     -- append the current term to the buffer
     buf = buf .. k
 
@@ -69,7 +69,7 @@ function split_qs (qs)
         buf = buf .. ' '
       else
         -- we're not inside a quoted string, append the term
-        _, colon_count = string.gsub(k, ':', '')
+        _, colon_count = k:gsub(':', '')
         if colon_count == 0 then
           -- the term does not contain a colon (no modifier like tag:work),
           -- it's a search term, we can stem it
@@ -112,14 +112,14 @@ for _, value in ipairs(split_qs(query.qs)) do
   local prefix = ''
   if string.sub(value, 1, 1) == '+' or string.sub(value, 1, 1) == '-' then
     prefix = string.sub(value, 1, 1)
-    value = string.sub(value, 2, string.len(value))
+    value = string.sub(value, 2, value:len())
   end
 
   -- check if the term is quoted
   quoted = string.sub(value, 1, 1) == '"'
 
   -- check if term contains a colon (like 'tag:work')
-  _, colon_count = string.gsub(value, ':', '')
+  _, colon_count = value:gsub(':', '')
   contains_colon = colon_count == 1
   tag = ''
   tag_value = ''
@@ -128,13 +128,13 @@ for _, value in ipairs(split_qs(query.qs)) do
     maybe_tag = string.sub(value, 1, string.find(value, ':')-1)
     if tags[maybe_tag] == true then
       tag = maybe_tag
-      tag_value = string.sub(value, string.find(value, ':')+1, string.len(value))
+      tag_value = string.sub(value, string.find(value, ':')+1, value:len())
     end
   end
 
   if value ~= '' then
     if quoted then
-      table.insert(terms, {value=string.sub(value, 2, string.len(value) - 1), kind='text_match', prefix=prefix})
+      table.insert(terms, {value=string.sub(value, 2, value:len() - 1), kind='text_match', prefix=prefix})
     elseif not quoted and tag ~= '' then
       table.insert(terms, {value=tag_value, kind='tag', tag=tag, prefix=prefix})
     else

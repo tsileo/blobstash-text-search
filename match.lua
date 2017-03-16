@@ -72,6 +72,35 @@ for index, term in ipairs(query.terms) do
       end
     end
 
+    if term.tag == 'kind' then
+      if doc['kind'] == term.value then
+        cond = cond or true
+      end
+    end
+
+    if term.tag == 'created' or term.tag == 'updated' then
+      date = doc[term.tag]
+      -- If there's no updated field, set created instead
+      if term.tag == 'updated' and doc['updated'] == nil then
+        date = doc['created']
+      end
+
+      -- Check if there's a ">" or "<" modifier
+      value = term.value
+      prefix = ''
+      test_prefix = term.value:sub(1, 2)
+      if test_prefix == '>' or test_prefix == '<' then
+        value = value:sub(2, value:len())
+        prefix = test_prefix
+      end
+
+      if value == date:sub(1, value:len()) then
+        cond = cond or true
+      end
+      -- FIXME handle >/< modifiers
+
+    end
+
   end
 
   -- The term is a text search
