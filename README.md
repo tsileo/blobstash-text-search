@@ -6,6 +6,7 @@ Lua query for [BlobStash](https://github.com/tsileo/blobstash) DocStore that pro
 
 ## Features
 
+ - Text fields are stemmed using Porter stemming algorithm (and query terms)
  - Support quoted query term for exact match (e.g. "exact match")
  - Support `+`/`-` operator (e.g. `-term` or `+"term query"`)
 
