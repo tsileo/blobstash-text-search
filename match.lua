@@ -60,6 +60,7 @@ end
 
 -- Iterate over each query term
 for index, term in ipairs(query.terms) do
+  debug('term=%s %s %s', term.value, term.prefix, term.kind)
   cond = false
 
   -- The term contains a tag
@@ -87,18 +88,20 @@ for index, term in ipairs(query.terms) do
 
       -- Check if there's a ">" or "<" modifier
       value = term.value
-      prefix = ''
-      test_prefix = term.value:sub(1, 2)
-      if test_prefix == '>' or test_prefix == '<' then
+      tag_prefix = term.value:sub(1, 1)
+      if tag_prefix == '>' or tag_prefix == '<' then
         value = value:sub(2, value:len())
-        prefix = test_prefix
+      else
+        tag_prefix = ''
       end
 
-      if value == date:sub(1, value:len()) then
+      if tag_prefix == '' and value == date:sub(1, value:len()) then
+        cond = cond or true
+      elseif tag_prefix == '>' and date > value then
+        cond = cond or true
+      elseif tag_prefix == '<' and date < value then
         cond = cond or true
       end
-      -- FIXME handle >/< modifiers
-
     end
 
   end
@@ -130,6 +133,7 @@ for index, term in ipairs(query.terms) do
   if bigno then
     return false
   end
+  debug('ok=%s', ok)
 end
 
 return ok
