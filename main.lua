@@ -1,11 +1,10 @@
 local qry = require('query')
 local tknzr = require('tokenizer')
 
-local fields = {'content', 'title'}
 local tokenizer = tknzr:new()
 local terms = tokenizer:parse(query.qs)
 
-local q = qry:new(terms, fields)
+local q = qry:new(terms, query.fields)
 
 function match(doc)
   q:build_text_index(doc)

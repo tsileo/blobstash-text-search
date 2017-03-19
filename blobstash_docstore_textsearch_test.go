@@ -108,18 +108,6 @@ func TestBlobStashTextSearchTokenizer(t *testing.T) {
 				map[string]interface{}{"value": "nope", "kind": "text_stems", "prefix": ""},
 			},
 		},
-		// {
-		// 	"\"lol\" +ok \"yes\" -no tag:boys +tag:work boys",
-		// 	[]map[string]interface{}{
-		// 		map[string]interface{}{"value": "lol", "kind": "text_match", "prefix": ""},
-		// 		map[string]interface{}{"value": "ok", "kind": "text_stems", "prefix": "+"},
-		// 		map[string]interface{}{"value": "yes", "kind": "text_match", "prefix": ""},
-		// 		map[string]interface{}{"value": "no", "kind": "text_stems", "prefix": "-"},
-		// 		map[string]interface{}{"value": "boys", "kind": "tag", "tag": "tag", "prefix": ""},
-		// 		map[string]interface{}{"value": "work", "kind": "tag", "tag": "tag", "prefix": "+"},
-		// 		map[string]interface{}{"value": "boi", "kind": "text_stems", "prefix": ""},
-		// 	},
-		// },
 	} {
 		out := prepQuery(tdata.qs)
 		m := luautil.TableToMap(out.(*lua.LTable))
@@ -144,7 +132,8 @@ func TestBlobStashTextSearch(t *testing.T) {
 
 	prepQuery := func(qs string) lua.LValue {
 		L.SetGlobal("query", luautil.InterfaceToLValue(L, map[string]interface{}{
-			"qs": qs,
+			"qs":     qs,
+			"fields": []interface{}{"title", "content"},
 		}))
 		if err := L.DoFile("main.lua"); err != nil {
 			panic(err)
