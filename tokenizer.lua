@@ -1,13 +1,3 @@
--- Returns the stem of the query term if necessary (using Porter stemmer algorithm)
-local tags = {tag=true, kind=true, created=true, updated=true}
-
--- debug function
-function debug (msg, ...)
-  if debug then
-    print(msg:format(unpack(arg)))
-  end
-end
-
 -- Python-like string.split implementation http://lua-users.org/wiki/SplitJoin
 function string:split(sSeparator, nMax, bRegexp)
    assert(sSeparator ~= '')
@@ -34,7 +24,8 @@ function string:split(sSeparator, nMax, bRegexp)
    return aRecord
 end
 
-function cstem (s)
+-- Returns the stem of the query term if necessary (using Porter stemmer algorithm)
+local function cstem(s)
   -- Detach the prefix (+/-) if any before we stem
   local f = s:sub(1, 1)
   if f == "+" or f == "-" then
@@ -52,7 +43,7 @@ function cstem (s)
 end
 
 -- Re-build the terms to join quoted strings (like ['"ok', 'lol"', 'nope'] => ['"ok lol", 'nope']
-function split_qs (qs)
+local function split_qs (qs)
   out = {}
   buf = ''
   in_quote = false
@@ -105,16 +96,13 @@ function split_qs (qs)
   return out
 end
 
--- Now convert the list of search terms to table
--- (like ['ok', 'tag:work'] => [{value='ok', kind='text_stems', prefix=''}, {...}]
-terms = {}
-for _, value in ipairs(split_qs(query.qs)) do
-  local prefix = ''
-  if string.sub(value, 1, 1) == '+' or string.sub(value, 1, 1) == '-' then
-    prefix = string.sub(value, 1, 1)
-    value = string.sub(value, 2, value:len())
-  end
+local tags = {}
+tags['tag'] = true
+tags['kind'] = true
+tags['created'] = true
+tags['updated'] = true
 
+function parse_tag(prefix, value)
   -- check if the term is quoted
   quoted = string.sub(value, 1, 1) == '"'
 
@@ -124,23 +112,72 @@ for _, value in ipairs(split_qs(query.qs)) do
   tag = ''
   tag_value = ''
   -- extract the tag (and it's value) if it looks there's one
-  if contains_colon then
+  if not quoted and contains_colon then
     maybe_tag = string.sub(value, 1, string.find(value, ':')-1)
     if tags[maybe_tag] == true then
       tag = maybe_tag
       tag_value = string.sub(value, string.find(value, ':')+1, value:len())
+      term = {value=tag_value, prefix=prefix, kind='tag', tag=tag}
+      return term
     end
   end
+
+  return nil
+end
+
+function parse_query_term(prefix, value)
+  -- check if the term is quoted
+  quoted = string.sub(value, 1, 1) == '"'
 
   if value ~= '' then
     if quoted then
-      table.insert(terms, {value=string.sub(value, 2, value:len() - 1), kind='text_match', prefix=prefix})
-    elseif not quoted and tag ~= '' then
-      table.insert(terms, {value=tag_value, kind='tag', tag=tag, prefix=prefix})
+      return {value=string.sub(value, 2, value:len() - 1), kind='text_match', prefix=prefix}
     else
-      table.insert(terms, {value=value, kind='text_stems', prefix=prefix})
+      return {value=value, kind='text_stems', prefix=prefix}
     end
   end
+  return nil
 end
 
-return {terms=terms}
+tokenizer = {}
+tokenizer.__index = tokenizer
+
+function tokenizer:new()
+  local tknzr = {parsers = {parse_query_term}, extra_parsers = {parse_tag}}
+  self.__index = self
+  return setmetatable(tknzr, self)
+end
+
+function tokenizer:add_parser(f)
+  table.insert(self.extra_parsers, f)
+end
+
+function tokenizer:parse(qs)
+  -- Now convert the list of search terms to table
+  -- (like ['ok', 'tag:work'] => [{value='ok', kind='text_stems', prefix=''}, {...}]
+  terms = {}
+  for _, value in ipairs(split_qs(qs)) do
+    local prefix = ''
+    if string.sub(value, 1, 1) == '+' or string.sub(value, 1, 1) == '-' then
+      prefix = string.sub(value, 1, 1)
+      value = string.sub(value, 2, value:len())
+    end
+
+    local parsed = false
+    for _, parsers in ipairs({self.extra_parsers, self.parsers}) do
+      if not parsed then
+        for _, f in ipairs(parsers) do
+          term = f(prefix, value)
+          if term ~= nil then
+            table.insert(terms, term)
+            parsed = true
+          end
+        end
+      end
+    end
+  end
+
+  return terms
+end
+
+return tokenizer
